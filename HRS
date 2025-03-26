@@ -1,0 +1,183 @@
+// Hotel-Reservation-System
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_ROOMS 100
+#define MAX_NAME_LENGTH 50
+
+typedef struct {
+    int roomNumber;
+    char guestName[MAX_NAME_LENGTH];
+    int isReserved; // 1 if reserved, 0 otherwise
+    time_t checkIn;
+    time_t checkOut;
+} Room;
+
+Room rooms[MAX_ROOMS];
+int roomCount = 0;
+
+void initializeRooms() {
+    for (int i = 0; i < MAX_ROOMS; i++) {
+        rooms[i].roomNumber = i + 1;
+        rooms[i].isReserved = 0;
+        memset(rooms[i].guestName, 0, sizeof(rooms[i].guestName));
+        rooms[i].checkIn = 0;
+        rooms[i].checkOut = 0;
+    }
+    roomCount = MAX_ROOMS;
+}
+
+void displayAvailableRooms() {
+    printf("\nAvailable Rooms:\n");
+    for (int i = 0; i < roomCount; i++) {
+        if (!rooms[i].isReserved) {
+            printf("Room %d\n", rooms[i].roomNumber);
+        }
+    }
+    printf("\n");
+}
+
+void reserveRoom() {
+    int roomNumber;
+    char guestName[MAX_NAME_LENGTH];
+    time_t checkInTime, checkOutTime;
+    struct tm checkInTm, checkOutTm;
+
+    displayAvailableRooms();
+
+    printf("Enter room number to reserve: ");
+    scanf("%d", &roomNumber);
+
+    if (roomNumber < 1 || roomNumber > roomCount) {
+        printf("Invalid room number.\n");
+        return;
+    }
+
+    if (rooms[roomNumber - 1].isReserved) {
+        printf("Room %d is already reserved.\n", roomNumber);
+        return;
+    }
+
+    printf("Enter guest name: ");
+    scanf(" %[^\n]s", guestName);
+
+    printf("Enter check-in date and time (YYYY-MM-DD HH:MM): ");
+    scanf("%d-%d-%d %d:%d", &checkInTm.tm_year, &checkInTm.tm_mon, &checkInTm.tm_mday, &checkInTm.tm_hour, &checkInTm.tm_min);
+
+    printf("Enter check-out date and time (YYYY-MM-DD HH:MM): ");
+    scanf("%d-%d-%d %d:%d", &checkOutTm.tm_year, &checkOutTm.tm_mon, &checkOutTm.tm_mday, &checkOutTm.tm_hour, &checkOutTm.tm_min);
+
+    checkInTm.tm_year -= 1900; // Adjust year for struct tm
+    checkInTm.tm_mon -= 1;    // Adjust month for struct tm
+    checkInTm.tm_sec = 0;
+    checkInTm.tm_isdst = -1;
+    checkInTime = mktime(&checkInTm);
+
+    checkOutTm.tm_year -= 1900;
+    checkOutTm.tm_mon -= 1;
+    checkOutTm.tm_sec = 0;
+    checkOutTm.tm_isdst = -1;
+    checkOutTime = mktime(&checkOutTm);
+
+    if (checkInTime >= checkOutTime) {
+        printf("Invalid check-in/check-out dates.\n");
+        return;
+    }
+
+    strcpy(rooms[roomNumber - 1].guestName, guestName);
+    rooms[roomNumber - 1].isReserved = 1;
+    rooms[roomNumber - 1].checkIn = checkInTime;
+    rooms[roomNumber - 1].checkOut = checkOutTime;
+
+    printf("Room %d reserved successfully for %s.\n", roomNumber, guestName);
+}
+
+void viewReservation() {
+    int roomNumber;
+
+    printf("Enter room number to view reservation: ");
+    scanf("%d", &roomNumber);
+
+    if (roomNumber < 1 || roomNumber > roomCount) {
+        printf("Invalid room number.\n");
+        return;
+    }
+
+    if (!rooms[roomNumber - 1].isReserved) {
+        printf("Room %d is not reserved.\n", roomNumber);
+        return;
+    }
+
+    printf("Room %d Reservation Details:\n", roomNumber);
+    printf("Guest Name: %s\n", rooms[roomNumber - 1].guestName);
+
+    char checkInStr[50], checkOutStr[50];
+    strftime(checkInStr, sizeof(checkInStr), "%Y-%m-%d %H:%M", localtime(&rooms[roomNumber - 1].checkIn));
+    strftime(checkOutStr, sizeof(checkOutStr), "%Y-%m-%d %H:%M", localtime(&rooms[roomNumber - 1].checkOut));
+    printf("Check-in: %s\n", checkInStr);
+    printf("Check-out: %s\n", checkOutStr);
+}
+
+void cancelReservation() {
+    int roomNumber;
+
+    printf("Enter room number to cancel reservation: ");
+    scanf("%d", &roomNumber);
+
+    if (roomNumber < 1 || roomNumber > roomCount) {
+        printf("Invalid room number.\n");
+        return;
+    }
+
+    if (!rooms[roomNumber - 1].isReserved) {
+        printf("Room %d is not reserved.\n", roomNumber);
+        return;
+    }
+
+    rooms[roomNumber - 1].isReserved = 0;
+    memset(rooms[roomNumber - 1].guestName, 0, sizeof(rooms[roomNumber - 1].guestName));
+    rooms[roomNumber - 1].checkIn = 0;
+    rooms[roomNumber - 1].checkOut = 0;
+
+    printf("Reservation for room %d cancelled.\n", roomNumber);
+}
+
+int main() {
+    initializeRooms();
+    int choice;
+
+    do {
+        printf("\nHotel Reservation System\n");
+        printf("1. Display Available Rooms\n");
+        printf("2. Reserve Room\n");
+        printf("3. View Reservation\n");
+        printf("4. Cancel Reservation\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                displayAvailableRooms();
+                break;
+            case 2:
+                reserveRoom();
+                break;
+            case 3:
+                viewReservation();
+                break;
+            case 4:
+                cancelReservation();
+                break;
+            case 5:
+                printf("Exiting...\n");
+                break;
+            default:
+                printf("Invalid choice.\n");
+        }
+    } while (choice != 5);
+
+    return 0;
+}
